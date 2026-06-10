@@ -1,0 +1,105 @@
+schema: 1
+name: bb
+version: 0.1.0
+description: >
+  Babashka is a fast, lightweight scripting runtime for Clojure programming language subset.
+  It's designed for CLI tasks and provides a REPL-driven experience
+  similar to Clojure but with much faster startup times.
+
+homepage: https://babashka.org/
+license: MIT
+family: repl
+aliases:
+  - bb
+
+process:
+  executable_candidates:
+    - bb
+    # Common installation paths or shims
+    - "bb.exe"
+  command_template: '"{shell_path}"'
+  inherit_environment: true
+  encoding: utf-8
+  line_ending: "\r"
+
+ready:
+  wait_for_event: prompt_start
+  timeout_ms: 0
+  settle_before_inject_ms: 0
+  suppress_mirror_during_inject: false
+  kick_enter_after_ready: false
+  # Babashka prints a banner then the `user=> ` prompt.
+  delay_after_inject_ms: 200
+
+init:
+  strategy: none
+  hook_type: none
+  delivery: none
+
+prompt:
+  # Babashka's default prompt is `user=> `.
+  # Continuation is usually indicated by the same prompt or a similar one depending on context,
+  # but for standard REPL behavior, we look for the primary prompt.
+  strategy: regex
+  primary: "^user=> $"
+  continuation: "^  #_=>$"
+  continuation_escape: "@\r"
+
+output:
+  post_prompt_settle_ms: 50
+  strip_ansi: false
+  strip_input_echo: true
+  input_echo_strategy: deterministic_byte_match
+  line_ending: "\n"
+
+input:
+  line_ending: "\r"
+  multiline_detect: none
+  multiline_delivery: direct
+  chunk_delay_ms: 0
+
+signals:
+  interrupt: "\x03"
+  eof: "\x04"
+
+lifecycle:
+  ready_timeout_ms: 0
+  shutdown:
+    command: "(System/exit)"
+    grace_ms: 500
+    force_signal: kill
+
+capabilities:
+  stateful: true
+  interrupt: true
+  meta_commands: false
+  async_output: false
+  exit_code: "reliable"
+  cwd_tracking: false
+  cwd_format: "none"
+  job_control: false
+  shell_integration: null
+  user_busy_detection: none
+
+probe:
+  eval: "(+ 1 1)"
+  expect: "^2$"
+
+tests:
+  - name: "basic arithmetic"
+    eval: "(+ 21 21)"
+    expect: "^42$"
+
+  - name: "string manipulation"
+    eval: '(clojure.string/upper-case "ripple")'
+    expect: '^"RIPPLE"$'
+
+  - name: "state: global variable persists"
+    setup_sequence:
+      - eval: "(def ripple_test 100)"
+    eval: "(+ ripple_test 1)"
+    expect: "^101$"
+
+  - name: "list construction"
+    eval: "(count [1 2 3 4 5])"
+    expect: "^5$"
