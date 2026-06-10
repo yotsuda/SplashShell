@@ -42,7 +42,7 @@ prompt:
   # but for standard REPL behavior, we look for the primary prompt.
   strategy: regex
   primary: "^user=> $"
-  continuation: "^user=> $"
+  continuation: "^  #_=>$"
   continuation_escape: "@\r"
 
 output:
